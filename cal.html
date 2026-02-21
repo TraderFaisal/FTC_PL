@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberTrader Pro | Ultra Future Gen</title>
+    <style>
+        :root {
+            --bg: #050508;
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff88;
+            --glass: rgba(20, 20, 30, 0.95);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle at center, #111 0%, #000 100%);
+        }
+
+        /* --- License Screen --- */
+        #licenseScreen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .license-box {
+            width: 320px;
+            padding: 30px;
+            background: var(--glass);
+            border: 2px solid var(--neon-blue);
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+        }
+
+        /* --- Main UI --- */
+        .main-card {
+            width: 380px;
+            background: var(--glass);
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 25px rgba(0, 242, 255, 0.2);
+            backdrop-filter: blur(15px);
+            display: none; 
+            transition: 0.3s;
+        }
+
+        .win-glow { box-shadow: 0 0 40px var(--neon-green) !important; border-color: var(--neon-green) !important; }
+        .loss-glow { box-shadow: 0 0 40px var(--neon-pink) !important; border-color: var(--neon-pink) !important; }
+
+        .balance-display {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 12px;
+            border: 1px solid #222;
+        }
+
+        .balance-display h1 { font-size: 36px; margin: 0; transition: 0.5s; }
+
+        .input-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        label { font-size: 10px; color: var(--neon-blue); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #fff;
+            box-sizing: border-box;
+            font-family: 'Orbitron';
+            outline: none;
+        }
+
+        .action-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-family: 'Orbitron';
+            transition: 0.2s;
+        }
+
+        .win-btn { background: transparent; color: var(--neon-green); border: 2px solid var(--neon-green); }
+        .loss-btn { background: transparent; color: var(--neon-pink); border: 2px solid var(--neon-pink); }
+        .end-btn { grid-column: span 2; margin-top: 15px; background: #111; color: #fff; border: 1px solid #444; font-size: 11px; }
+
+        /* --- UID Display Box (New) --- */
+        #uidDisplayBox {
+            display: none;
+            margin-top: 20px;
+            width: 380px;
+            background: rgba(0, 242, 255, 0.1);
+            border: 2px solid var(--neon-blue);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-sizing: border-box;
+        }
+
+        .uid-text {
+            font-size: 24px;
+            color: var(--neon-blue);
+            font-weight: bold;
+            margin: 10px 0;
+            letter-spacing: 2px;
+        }
+
+        .copy-btn {
+            background: var(--neon-blue);
+            color: #000;
+            padding: 8px 15px;
+            font-size: 12px;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .mtg-box {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px dashed var(--neon-blue);
+        }
+
+        .next-amt { font-size: 26px; display: block; margin-top: 5px; font-weight: bold; }
+
+        #successToast {
+            position: fixed; top: 20px; background: var(--neon-green); color: #000;
+            padding: 12px 25px; border-radius: 50px; font-weight: bold; display: none;
+            z-index: 10000; box-shadow: 0 0 20px var(--neon-green);
+            animation: fadeInOut 3s forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            15% { opacity: 1; transform: translateY(0); }
+            85% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="licenseScreen">
+    <div class="license-box">
+        <h2 style="color: var(--neon-blue); margin-top: 0;">SYSTEM LOCKED</h2>
+        <input type="text" id="licenseInput" placeholder="Enter License..." style="text-align: center; margin-bottom: 20px; border-color: var(--neon-blue);">
+        <button class="win-btn" style="width: 100%;" onclick="checkLicense()">ACTIVATE SYSTEM</button>
+    </div>
+</div>
+
+<div id="successToast">Successfully Statement Sent!</div>
+
+<div class="main-card" id="card">
+    <div class="balance-display">
+        <label>Live Balance</label>
+        <h1 id="displayBal">$100.00</h1>
+    </div>
+
+    <div class="input-section">
+        <div class="input-group">
+            <label>Start Balance</label>
+            <input type="number" id="setBal" value="100" oninput="resetSession()">
+        </div>
+        <div class="input-group">
+            <label>Trade Amount</label>
+            <input type="number" id="tradeAmt" value="1">
+        </div>
+        <div class="input-group">
+            <label>Payout %</label>
+            <input type="number" id="payout" value="85">
+        </div>
+        <div class="input-group">
+            <label>MTG Multiplier</label>
+            <input type="number" id="multiplier" value="2">
+        </div>
+    </div>
+
+    <div class="action-btns">
+        <button class="win-btn" onclick="tradeResult('WIN')">ITM (Win)</button>
+        <button class="loss-btn" onclick="tradeResult('LOSS')">OTM (Loss)</button>
+        <button class="end-btn" onclick="initiateEndSession()">End Session & Send To TG</button>
+    </div>
+
+    <div class="mtg-box">
+        <span id="statusLabel" style="background:#222; padding:2px 8px; border-radius:10px; font-size:10px;">READY</span>
+        <span class="next-amt" id="nextTradeDisplay">$1.00</span>
+    </div>
+
+    <div style="margin-top:15px; display:flex; justify-content: space-between; font-size:12px; border-top: 1px solid #222; padding-top: 10px;">
+        <span style="color:var(--neon-green)">W: <span id="winCount">0</span></span>
+        <span style="color:var(--neon-pink)">L: <span id="lossCount">0</span></span>
+        <span style="color:var(--neon-blue)">WR: <span id="winRate">0%</span></span>
+    </div>
+</div>
+
+<div id="uidDisplayBox">
+    <label style="color: var(--neon-blue); font-size: 10px;">SESSION UID GENERATED</label>
+    <div class="uid-text" id="uidText">------</div>
+    <button class="copy-btn" onclick="copyUID()">Copy UID</button>
+</div>
+
+<script>
+    const BOT_TOKEN = '7785848958:AAFnK1gZBfXJemeZDIgBwkZ5eTR0htC8hOI';
+    const CHAT_ID = '-1003489711313';
+
+    let balance = 100;
+    let wins = 0;
+    let losses = 0;
+    let isMTGActive = false;
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        if (type === 'win') {
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        } else if (type === 'loss') {
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'login') {
+            osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        }
+    }
+
+    function checkLicense() {
+        const key = document.getElementById('licenseInput').value;
+        if(key.trim() !== "") {
+            playSound('login');
+            document.getElementById('licenseScreen').style.display = 'none';
+            document.getElementById('card').style.display = 'block';
+        }
+    }
+
+    function tradeResult(type) {
+        let base = parseFloat(document.getElementById('tradeAmt').value);
+        let mult = parseFloat(document.getElementById('multiplier').value);
+        let payout = parseFloat(document.getElementById('payout').value) / 100;
+        let currentBet = isMTGActive ? (base * mult) : base;
+        if (type === 'WIN') {
+            balance += (currentBet * payout);
+            wins++; isMTGActive = false;
+            playSound('win');
+            triggerEffect('win-glow');
+        } else {
+            balance -= currentBet;
+            losses++; isMTGActive = !isMTGActive;
+            playSound('loss');
+            triggerEffect('loss-glow');
+        }
+        refreshUI();
+    }
+
+    function triggerEffect(className) {
+        let card = document.getElementById('card');
+        card.classList.add(className);
+        setTimeout(() => card.classList.remove(className), 500);
+    }
+
+    function refreshUI() {
+        let base = parseFloat(document.getElementById('tradeAmt').value);
+        let startBal = parseFloat(document.getElementById('setBal').value);
+        document.getElementById('displayBal').innerText = "$" + balance.toFixed(2);
+        document.getElementById('displayBal').style.color = balance >= startBal ? "var(--neon-green)" : "var(--neon-pink)";
+        let nextAmt = isMTGActive ? (base * parseFloat(document.getElementById('multiplier').value)) : base;
+        document.getElementById('nextTradeDisplay').innerText = "$" + nextAmt.toFixed(2);
+        document.getElementById('nextTradeDisplay').style.color = isMTGActive ? "var(--neon-pink)" : "var(--neon-green)";
+        document.getElementById('winCount').innerText = wins;
+        document.getElementById('lossCount').innerText = losses;
+        let total = wins + losses;
+        document.getElementById('winRate').innerText = total === 0 ? "0%" : ((wins/total)*100).toFixed(1) + "%";
+    }
+
+    // --- New Logic: End Session with Username & UID ---
+    function initiateEndSession() {
+        const username = prompt("Enter TRADER USERNAME:");
+        if (username === null || username.trim() === "") {
+            alert("Username is required to send the statement!");
+            return;
+        }
+
+        const randomUID = Math.floor(100000 + Math.random() * 900000); // 6 Digit Random UID
+        
+        // Show UID Box on Web
+        document.getElementById('uidText').innerText = randomUID;
+        document.getElementById('uidDisplayBox').style.display = 'block';
+
+        sendStatement(username, randomUID);
+    }
+
+    function copyUID() {
+        const uid = document.getElementById('uidText').innerText;
+        navigator.clipboard.writeText(uid).then(() => {
+            alert("UID Copied to Clipboard: " + uid);
+        });
+    }
+
+    function sendStatement(username, uid) {
+        const startBal = parseFloat(document.getElementById('setBal').value);
+        const profitLoss = (balance - startBal).toFixed(2);
+        const emoji = profitLoss >= 0 ? "✅ PROFIT" : "❌ LOSS";
+
+        const text = `🚀 **TRADER FAISAL STATEMENT**\n━━━━━━━━━━━━━━━━\n💰 **Initial:** $${startBal}\n💵 **Final:** $${balance.toFixed(2)}\n📊 **PnL:** ${emoji} ($${profitLoss})\n━━━━━━━━━━━━━━━━\n✅ Wins: ${wins} | ❌ Loss: ${losses}\n🎯 WinRate: ${document.getElementById('winRate').innerText}\n━━━━━━━━━━━━━━━━\n👤 **TRADER USERNAME:** ${username}\n🆔 **UID:** ${uid}\n━━━━━━━━━━━━━━━━\n🤖 *Dev: TRADER FAISAL AHMED*`;
+
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: CHAT_ID, text: text, parse_mode: 'Markdown' })
+        })
+        .then(res => {
+            if(res.ok) {
+                const toast = document.getElementById('successToast');
+                toast.style.display = 'block';
+                setTimeout(() => { toast.style.display = 'none'; }, 3000);
+            }
+        });
+    }
+
+    function resetSession() {
+        balance = parseFloat(document.getElementById('setBal').value) || 100;
+        wins = 0;
+        losses = 0;
+        isMTGActive = false;
+        document.getElementById('uidDisplayBox').style.display = 'none';
+        refreshUI();
+    }
+
+    refreshUI();
+</script>
+
+</body>
+</html>
